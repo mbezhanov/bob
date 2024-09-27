@@ -125,31 +125,51 @@ func (d *driver) buildQuery(schema string) (string, []any) {
 
 	tableFilter := drivers.ParseTableFilter(d.config.Only, d.config.Except)
 
-	include := make([]string, 0, len(tableFilter.Only))
-	for _, name := range tableFilter.Only {
-		if (schema == "main" && !strings.Contains(name, ".")) || strings.HasPrefix(name, schema+".") {
-			include = append(include, name)
+	if len(tableFilter.Only) > 0 {
+		var subqueries []string
+		stringPatterns, regexPatterns := tableFilter.ClassifyPatterns(tableFilter.Only)
+		include := make([]string, 0, len(stringPatterns))
+		for _, name := range stringPatterns {
+			if (schema == "main" && !strings.Contains(name, ".")) || strings.HasPrefix(name, schema+".") {
+				include = append(include, strings.TrimPrefix(name, schema+"."))
+			}
+		}
+		if len(include) > 0 {
+			subqueries = append(subqueries, fmt.Sprintf("name in (%s)", strmangle.Placeholders(true, len(include), 1, 1)))
+			for _, w := range include {
+				args = append(args, w)
+			}
+		}
+		if len(regexPatterns) > 0 {
+			subqueries = append(subqueries, fmt.Sprintf("name regexp (%s)", strmangle.Placeholders(true, 1, len(args)+1, 1)))
+			args = append(args, strings.Join(regexPatterns, "|"))
+		}
+		if len(subqueries) > 0 {
+			query += fmt.Sprintf(" and (%s)", strings.Join(subqueries, " or "))
 		}
 	}
 
-	exclude := make([]string, 0, len(tableFilter.Except))
-	for _, name := range tableFilter.Except {
-		if (schema == "main" && !strings.Contains(name, ".")) || strings.HasPrefix(name, schema+".") {
-			exclude = append(exclude, name)
+	if len(tableFilter.Except) > 0 {
+		var subqueries []string
+		stringPatterns, regexPatterns := tableFilter.ClassifyPatterns(tableFilter.Except)
+		exclude := make([]string, 0, len(tableFilter.Except))
+		for _, name := range stringPatterns {
+			if (schema == "main" && !strings.Contains(name, ".")) || strings.HasPrefix(name, schema+".") {
+				exclude = append(exclude, strings.TrimPrefix(name, schema+"."))
+			}
 		}
-	}
-
-	if len(include) > 0 {
-		query += fmt.Sprintf(" and name in (%s)", strmangle.Placeholders(true, len(include), 1, 1))
-		for _, w := range include {
-			args = append(args, w)
+		if len(exclude) > 0 {
+			subqueries = append(subqueries, fmt.Sprintf("name not in (%s)", strmangle.Placeholders(true, len(exclude), 1+len(args), 1)))
+			for _, w := range exclude {
+				args = append(args, w)
+			}
 		}
-	}
-
-	if len(exclude) > 0 {
-		query += fmt.Sprintf(" and name not in (%s)", strmangle.Placeholders(true, len(exclude), 1+len(include), 1))
-		for _, w := range exclude {
-			args = append(args, w)
+		if len(regexPatterns) > 0 {
+			subqueries = append(subqueries, fmt.Sprintf("name not regexp (%s)", strmangle.Placeholders(true, 1, len(args)+1, 1)))
+			args = append(args, strings.Join(regexPatterns, "|"))
+		}
+		if len(subqueries) > 0 {
+			query += fmt.Sprintf(" and (%s)", strings.Join(subqueries, " and "))
 		}
 	}
 
