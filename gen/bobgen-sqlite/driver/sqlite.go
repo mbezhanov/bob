@@ -277,12 +277,6 @@ func (d driver) columns(ctx context.Context, schema, tableName string, tinfo []i
 	}
 
 	filter := colFilter[tableName]
-	includedColumns := make(map[string]struct{}, len(filter.Only))
-	if len(filter.Only) > 0 {
-		for _, w := range filter.Only {
-			includedColumns[w] = struct{}{}
-		}
-	}
 	excludedColumns := make(map[string]struct{}, len(filter.Except))
 	if len(filter.Except) > 0 {
 		for _, w := range filter.Except {
@@ -292,9 +286,6 @@ func (d driver) columns(ctx context.Context, schema, tableName string, tinfo []i
 
 	for _, colInfo := range tinfo {
 		if _, ok := excludedColumns[colInfo.Name]; ok {
-			continue
-		}
-		if _, ok := includedColumns[colInfo.Name]; !ok && len(includedColumns) > 0 {
 			continue
 		}
 		column := drivers.Column{
