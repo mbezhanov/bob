@@ -185,9 +185,10 @@ func (d *driver) tables(ctx context.Context) ([]drivers.Table, error) {
 		return nil, err
 	}
 
+	colFilter := drivers.ParseColumnFilter(mainTables, d.config.Only, d.config.Except)
 	allTables := make([]drivers.Table, len(mainTables))
 	for i, name := range mainTables {
-		allTables[i], err = d.getTable(ctx, "main", name)
+		allTables[i], err = d.getTable(ctx, "main", name, colFilter)
 		if err != nil {
 			return nil, err
 		}
@@ -199,9 +200,9 @@ func (d *driver) tables(ctx context.Context) ([]drivers.Table, error) {
 		if err != nil {
 			return nil, err
 		}
-
+		colFilter = drivers.ParseColumnFilter(tables, d.config.Only, d.config.Except)
 		for _, name := range tables {
-			table, err := d.getTable(ctx, schema, name)
+			table, err := d.getTable(ctx, schema, name, colFilter)
 			if err != nil {
 				return nil, err
 			}
@@ -212,7 +213,7 @@ func (d *driver) tables(ctx context.Context) ([]drivers.Table, error) {
 	return allTables, nil
 }
 
-func (d driver) getTable(ctx context.Context, schema, name string) (drivers.Table, error) {
+func (d driver) getTable(ctx context.Context, schema, name string, colFilter drivers.ColumnFilter) (drivers.Table, error) {
 	var err error
 
 	table := drivers.Table{
@@ -226,7 +227,7 @@ func (d driver) getTable(ctx context.Context, schema, name string) (drivers.Tabl
 		return table, err
 	}
 
-	table.Columns, err = d.columns(ctx, schema, name, tinfo)
+	table.Columns, err = d.columns(ctx, schema, name, tinfo, colFilter)
 	if err != nil {
 		return table, err
 	}
@@ -254,7 +255,7 @@ func (d driver) getTable(ctx context.Context, schema, name string) (drivers.Tabl
 // from the database. It retrieves the column names
 // and column types and returns those as a []Column after TranslateColumnType()
 // converts the SQL types to Go types, for example: "varchar" to "string"
-func (d driver) columns(ctx context.Context, schema, tableName string, tinfo []info) ([]drivers.Column, error) {
+func (d driver) columns(ctx context.Context, schema, tableName string, tinfo []info, colFilter drivers.ColumnFilter) ([]drivers.Column, error) {
 	var columns []drivers.Column //nolint:prealloc
 
 	//nolint:gosec
@@ -275,7 +276,27 @@ func (d driver) columns(ctx context.Context, schema, tableName string, tinfo []i
 		}
 	}
 
+	filter := colFilter[tableName]
+	includedColumns := make(map[string]struct{}, len(filter.Only))
+	if len(filter.Only) > 0 {
+		for _, w := range filter.Only {
+			includedColumns[w] = struct{}{}
+		}
+	}
+	excludedColumns := make(map[string]struct{}, len(filter.Except))
+	if len(filter.Except) > 0 {
+		for _, w := range filter.Except {
+			excludedColumns[w] = struct{}{}
+		}
+	}
+
 	for _, colInfo := range tinfo {
+		if _, ok := excludedColumns[colInfo.Name]; ok {
+			continue
+		}
+		if _, ok := includedColumns[colInfo.Name]; !ok && len(includedColumns) > 0 {
+			continue
+		}
 		column := drivers.Column{
 			Name:     colInfo.Name,
 			DBType:   strings.ToUpper(colInfo.Type),

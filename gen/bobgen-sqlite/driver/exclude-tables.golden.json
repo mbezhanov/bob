@@ -171,17 +171,6 @@
 					"autoincr": false,
 					"domain_name": "",
 					"type": "int32"
-				},
-				{
-					"name": "secret_col",
-					"db_type": "TEXT",
-					"default": "",
-					"comment": "",
-					"nullable": false,
-					"generated": false,
-					"autoincr": false,
-					"domain_name": "",
-					"type": "string"
 				}
 			],
 			"indexes": [],
@@ -211,17 +200,6 @@
 					"autoincr": false,
 					"domain_name": "",
 					"type": "int32"
-				},
-				{
-					"name": "secret_col",
-					"db_type": "TEXT",
-					"default": "",
-					"comment": "",
-					"nullable": false,
-					"generated": false,
-					"autoincr": false,
-					"domain_name": "",
-					"type": "string"
 				}
 			],
 			"indexes": [],
@@ -251,17 +229,6 @@
 					"autoincr": false,
 					"domain_name": "",
 					"type": "int32"
-				},
-				{
-					"name": "secret_col",
-					"db_type": "TEXT",
-					"default": "",
-					"comment": "",
-					"nullable": false,
-					"generated": false,
-					"autoincr": false,
-					"domain_name": "",
-					"type": "string"
 				}
 			],
 			"indexes": [],
@@ -522,17 +489,6 @@
 					"autoincr": false,
 					"domain_name": "",
 					"type": "int32"
-				},
-				{
-					"name": "secret_col",
-					"db_type": "TEXT",
-					"default": "",
-					"comment": "",
-					"nullable": false,
-					"generated": false,
-					"autoincr": false,
-					"domain_name": "",
-					"type": "string"
 				}
 			],
 			"indexes": [],
@@ -562,17 +518,6 @@
 					"autoincr": false,
 					"domain_name": "",
 					"type": "int32"
-				},
-				{
-					"name": "secret_col",
-					"db_type": "TEXT",
-					"default": "",
-					"comment": "",
-					"nullable": false,
-					"generated": false,
-					"autoincr": false,
-					"domain_name": "",
-					"type": "string"
 				}
 			],
 			"indexes": [],
@@ -602,17 +547,6 @@
 					"autoincr": false,
 					"domain_name": "",
 					"type": "int32"
-				},
-				{
-					"name": "secret_col",
-					"db_type": "TEXT",
-					"default": "",
-					"comment": "",
-					"nullable": false,
-					"generated": false,
-					"autoincr": false,
-					"domain_name": "",
-					"type": "string"
 				}
 			],
 			"indexes": [],
